@@ -47,12 +47,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun initPermissions() {
         permissionManager.addPermission(
-                Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                getString(R.string.writeExternalStoragePermissionNeeded),
-                "",
-                getString(R.string.writeExternalStoragePermissionThanks),
-                getString(R.string.writeExternalStoragePermissionSettings)
-            )
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            getString(R.string.writeExternalStoragePermissionInfo),
+            getString(R.string.writeExternalStoragePermissionNeeded),
+            getString(R.string.writeExternalStoragePermissionDenied),
+            getString(R.string.writeExternalStoragePermissionThanks),
+            getString(R.string.writeExternalStoragePermissionSettings)
+        )
     }
 
     private fun initListeners() {

@@ -16,7 +16,8 @@ import androidx.core.app.ActivityCompat
 class PermissionManager(private val activityContext: Context) {
     data class PermissionData(
         var permission: String?,
-        var permissionExplanation: String?,
+        var permissionInfo: String?,
+        var permissionNeededMessage: String?,
         var permissionDeniedMessage: String?,
         var permissionGrantedMessage: String?,
         var permissionPermanentDeniedMessage: String?
@@ -57,7 +58,7 @@ class PermissionManager(private val activityContext: Context) {
                                     // Permission denied
                                     showAlert(
                                         R.string.permissionDenied,
-                                        permissionsRequired[position].permissionExplanation,
+                                        permissionsRequired[position].permissionNeededMessage,
                                         { _, _ ->
                                             // Ask again for permission
                                             askOnePermission(permissionsRequired[position])
@@ -91,8 +92,13 @@ class PermissionManager(private val activityContext: Context) {
             )
     }
 
-    fun addPermission( permission: String?, permissionExplanation: String, permissionDeniedMessage: String,permissionGrantedMessage: String, permissionPermanentDeniedMessage: String){
-        permissionsRequired.add(PermissionData(permission, permissionExplanation, permissionDeniedMessage, permissionGrantedMessage, permissionPermanentDeniedMessage))
+    fun addPermission(permission: String?, permissionInfo: String?, permissionNeededMessage: String, permissionDeniedMessage: String, permissionGrantedMessage: String, permissionPermanentDeniedMessage: String){
+        permissionsRequired.add(PermissionData(permission, permissionInfo, permissionNeededMessage, permissionDeniedMessage, permissionGrantedMessage, permissionPermanentDeniedMessage))
+    }
+
+    fun getAllNeededPermissions(): MutableList<PermissionData> {
+        // Comprova que tingui els permisos necessaris
+        return permissionsRequired
     }
 
     fun hasAllNeededPermissions(): Boolean {
@@ -106,7 +112,7 @@ class PermissionManager(private val activityContext: Context) {
     }
 
 
-    private fun hasPermission(permission: String): Boolean {
+    fun hasPermission(permission: String): Boolean {
         return ActivityCompat.checkSelfPermission(
             activityContext,
             permission
