@@ -13,61 +13,71 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 
-class PermissionManager(context: Context, permissionsRequired: ArrayList<PermissionData>) {
-    var activityResultLauncher: ActivityResultLauncher<Array<String>>? = null
+class PermissionManager(private val activityContext: Context) {
+    data class PermissionData(
+        var permission: String?,
+        var permissionExplanation: String?,
+        var permissionDeniedMessage: String?,
+        var permissionGrantedMessage: String?,
+        var permissionPermanentDeniedMessage: String?
+    )
+
+    private val permissionsRequired = mutableListOf<PermissionData>()
+    private var activityResultLauncher: ActivityResultLauncher<Array<String>>? = null
 
     init {
         // Inicialitza el launcher per demanar permisos
-        initPermissionLauncher(context, permissionsRequired)
+        initPermissionLauncher()
     }
 
-    private fun initPermissionLauncher(
-        context: Context,
-        permissionsRequired: ArrayList<PermissionData>
-    ) {
+    private fun initPermissionLauncher() {
         // Inicialitza el launcher per demanar permisos
         activityResultLauncher =
-            (context as AppCompatActivity).registerForActivityResult(
+            (activityContext as AppCompatActivity).registerForActivityResult(
                 ActivityResultContracts.RequestMultiplePermissions(),
                 ActivityResultCallback<Map<String, Boolean>> { permissions ->
                     // Check if all permissions are granted
                     if (permissions.containsValue(false)) {
                         // Check every permission
-                        for (permission in permissions.keys) {
-                            val position = permissionsRequired.indexOfFirst { it.getPermission() == permission }
+                        for (permissionKey in permissions.keys) {
+                            val position = permissionsRequired.indexOfFirst { it.permission == permissionKey }
 
                             when {
-                                permissions[permission] == true -> {
+                                permissions[permissionKey] == true -> {
                                     // Permission granted
                                     showAlert(
-                                        context,
                                         R.string.permissionGranted,
-                                        permissionsRequired[position].getPermissionGrantedMessage()
+                                        permissionsRequired[position].permissionGrantedMessage
                                     )
                                 }
                                 ActivityCompat.shouldShowRequestPermissionRationale(
-                                    context,
-                                    permission
+                                    activityContext,
+                                    permissionKey
                                 ) -> {
                                     // Permission denied
                                     showAlert(
-                                        context,
                                         R.string.permissionDenied,
-                                        permissionsRequired[position].getPermissionExplanation()
+                                        permissionsRequired[position].permissionExplanation,
+                                        { _, _ ->
+                                            // Ask again for permission
+                                            askOnePermission(permissionsRequired[position])
+                                        },
+                                        { dialogInterface, _ ->
+                                            dialogInterface.dismiss()
+                                        }
                                     )
                                 }
                                 else -> {
                                     // Permission denied permanently
                                     showAlert(
-                                        context,
                                         R.string.permissionPermDenied,
-                                        permissionsRequired[position].getPermissionPermanentDeniedMessage(),
+                                        permissionsRequired[position].permissionPermanentDeniedMessage,
                                         { _, _ ->
                                             // Go to app settings
                                             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                                            val uri = Uri.fromParts("package", context.packageName, null)
+                                            val uri = Uri.fromParts("package", activityContext.packageName, null)
                                             intent.data = uri
-                                            context.startActivity(intent)
+                                            activityContext.startActivity(intent)
                                         },
                                         { dialogInterface, _ ->
                                             dialogInterface.dismiss()
@@ -81,45 +91,45 @@ class PermissionManager(context: Context, permissionsRequired: ArrayList<Permiss
             )
     }
 
-    fun hasAllNeededPermissions(context: Context, permissions: ArrayList<PermissionData>): Boolean {
+    fun addPermission( permission: String?, permissionExplanation: String, permissionDeniedMessage: String,permissionGrantedMessage: String, permissionPermanentDeniedMessage: String){
+        permissionsRequired.add(PermissionData(permission, permissionExplanation, permissionDeniedMessage, permissionGrantedMessage, permissionPermanentDeniedMessage))
+    }
+
+    fun hasAllNeededPermissions(): Boolean {
         // Comprova que tingui els permisos necessaris
-        return permissions.all { hasPermission(context, it.getPermission() ?: "") }
+        return permissionsRequired.all { hasPermission(it.permission ?: "") }
     }
 
-    fun getRejectedPermissions(
-        context: Context,
-        permissions: ArrayList<PermissionData>
-    ): ArrayList<PermissionData> {
+    fun getRejectedPermissions(): ArrayList<PermissionData> {
         // Retorna només els permisos rebutjats
-        return ArrayList(permissions.filter { !hasPermission(context, it.getPermission() ?: "") })
+        return ArrayList(permissionsRequired.filter { !hasPermission(it.permission ?: "") })
     }
 
 
-    private fun hasPermission(context: Context, permission: String): Boolean {
+    private fun hasPermission(permission: String): Boolean {
         return ActivityCompat.checkSelfPermission(
-            context,
+            activityContext,
             permission
         ) == PackageManager.PERMISSION_GRANTED
     }
 
-    fun askForPermissions(context: Context?, permissions: ArrayList<PermissionData>) {
+    fun askForPermissions(permissions: ArrayList<PermissionData>) {
         // Demana tots els permisos necessaris
-        activityResultLauncher?.launch(permissions.map { it.getPermission() ?: "" }.toTypedArray())
+        activityResultLauncher?.launch(permissions.map { it.permission ?: "" }.toTypedArray())
     }
 
-    fun askOnePermission(context: Context?, permission: PermissionData) {
+    fun askOnePermission(permission: PermissionData) {
         // Demana el permís necessari
-        activityResultLauncher?.launch(arrayOf(permission.getPermission() ?: ""))
+        activityResultLauncher?.launch(arrayOf(permission.permission ?: ""))
     }
 
     private fun showAlert(
-        context: Context,
         titleResId: Int,
         message: String?,
         positiveClickListener: DialogInterface.OnClickListener? = null,
         negativeClickListener: DialogInterface.OnClickListener? = null
     ) {
-        AlertDialog.Builder(context)
+        AlertDialog.Builder(activityContext)
             .setTitle(titleResId)
             .setMessage(message)
             .setCancelable(true)

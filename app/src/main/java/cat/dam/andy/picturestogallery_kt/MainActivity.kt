@@ -3,6 +3,7 @@ package cat.dam.andy.picturestogallery_kt
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.ContentValues
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -23,15 +24,56 @@ import java.util.Date
 import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
-    private var iv_imatge: ImageView? = null
-    private var btn_foto: Button? = null
-    private  var btn_galeria:Button? = null
+    private var ivImatge: ImageView? = null
+    private var btnFoto: Button? = null
+    private var btnGaleria: Button? = null
     private var uriPhotoImage: Uri? = null
-    private var permissionManager: PermissionManager? = null
-    private val permissionsRequired: ArrayList<PermissionData> = ArrayList<PermissionData>()
+    private val context: Context = this
+    private var permissionManager = PermissionManager(context)
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        initViews()
+        initPermissions()
+        initListeners()
+    }
+
+    private fun initViews() {
+        ivImatge = findViewById(R.id.iv_foto)
+        btnFoto = findViewById(R.id.btn_foto)
+        btnGaleria = findViewById(R.id.btn_galeria)
+    }
+
+    private fun initPermissions() {
+        permissionManager.addPermission(
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                getString(R.string.writeExternalStoragePermissionNeeded),
+                "",
+                getString(R.string.writeExternalStoragePermissionThanks),
+                getString(R.string.writeExternalStoragePermissionSettings)
+            )
+    }
+
+    private fun initListeners() {
+        btnGaleria?.setOnClickListener {
+            if (!permissionManager.hasAllNeededPermissions()) {
+                permissionManager.askForPermissions(permissionManager.getRejectedPermissions())
+            } else {
+                openGallery()
+            }
+        }
+        btnFoto?.setOnClickListener() {
+            if (!permissionManager.hasAllNeededPermissions()) {
+                permissionManager.askForPermissions(permissionManager.getRejectedPermissions())
+            } else {
+                takePicture()
+            }
+        }
+    }
 
 
-    private val activityResultLauncherGallery = registerForActivityResult<Intent, ActivityResult>(
+    private val activityResultLauncherGallery = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result: ActivityResult ->
         //here we will handle the result of our intent
@@ -42,95 +84,31 @@ class MainActivity : AppCompatActivity() {
             if (data != null) {
                 val imageUri = data.data
                 println("galeria: $imageUri")
-                iv_imatge!!.setImageURI(imageUri)
+                ivImatge!!.setImageURI(imageUri)
             }
         } else {
             //cancelled
             Toast.makeText(this@MainActivity, "Cancelled...", Toast.LENGTH_SHORT).show()
         }
     }
-    private val activityResultLauncherPhoto = registerForActivityResult<Intent, ActivityResult>(
+
+    private val activityResultLauncherPhoto = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result: ActivityResult ->
         //here we will handle the result of our intent
         if (result.resultCode == RESULT_OK) {
             Toast.makeText(this, "Image saved", Toast.LENGTH_SHORT).show()
-            iv_imatge!!.setImageURI(uriPhotoImage) //Amb paràmetre EXIF podem canviar orientació (per defecte horiz en versions android antigues)
+            ivImatge!!.setImageURI(uriPhotoImage) //Amb paràmetre EXIF podem canviar orientació (per defecte horiz en versions android antigues)
             refreshGallery() //refresca gallery per veure nou fitxer
             /* Intent data = result.getData(); //si volguessim només la miniatura
         Uri imageUri = data.getData();
-        iv_imatge.setImageURI(imageUri);*/
+        ivImatge.setImageURI(imageUri);*/
         } else {
             //cancelled
             Toast.makeText(this@MainActivity, "Cancelled...", Toast.LENGTH_SHORT).show()
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        initViews()
-        initPermissions()
-        initListeners()
-    }
-    private fun initViews() {
-        iv_imatge = findViewById(R.id.iv_foto)
-        btn_foto = findViewById(R.id.btn_foto)
-        btn_galeria = findViewById(R.id.btn_galeria)
-    }
-
-    private fun initListeners() {
-        btn_galeria?.setOnClickListener(View.OnClickListener {
-            if (!permissionManager?.hasAllNeededPermissions(
-                    this,
-                    permissionsRequired
-                )!!
-            ) { //Si manquen permisos els demanem
-                permissionManager?.getRejectedPermissions(this, permissionsRequired)?.let {
-                    permissionManager?.askForPermissions(
-                        this,
-                        it
-                    )
-                }
-            } else {
-                //Si ja tenim tots els permisos, obrim la galeria
-                openGallery()
-            }
-        })
-        btn_foto?.setOnClickListener(View.OnClickListener {
-            val permissionManager = permissionManager // Afegeix aquesta línia per obtenir una referència no nullable
-            if ((permissionManager != null) && !permissionManager.hasAllNeededPermissions(
-                    this,
-                    permissionsRequired
-                )
-            ) { // Si falten permisos els demanem
-                permissionManager.askForPermissions(
-                    this,
-                    permissionManager.getRejectedPermissions(this, permissionsRequired)
-                )
-            } else {
-                // Si ja tenim tots els permisos, fem la foto
-                takePicture()
-            }
-        })
-    }
-
-    private fun initPermissions() {
-        //TO DO: CONFIGURE ALL NECESSARY PERMISSIONS
-        //BEGIN
-        permissionsRequired.add(
-            PermissionData(
-                Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                getString(R.string.writeExternalStoragePermissionNeeded),
-                "",
-                getString(R.string.writeExternalStoragePermissionThanks),
-                getString(R.string.writeExternalStoragePermissionSettings)
-            )
-        )
-        //END
-        //DON'T DELETE == call permission manager ==
-        permissionManager = PermissionManager(this, permissionsRequired)
-    }
 
     @SuppressLint("QueryPermissionsNeeded")
     private fun openGallery() {
@@ -197,7 +175,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    @Throws(IOException::class)
     private fun createImageFile(): File? {
         val wasSuccessful: Boolean //just for testing mkdirs
         // Create an image file name
