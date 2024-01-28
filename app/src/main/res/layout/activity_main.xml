@@ -10,20 +10,14 @@
 
     <ImageView
         android:id="@+id/iv_foto"
-        android:layout_width="250dp"
+        android:layout_width="200dp"
         android:layout_height="wrap_content"
-        android:padding="2dp"
-        android:layout_marginTop="1dp"
-        android:layout_marginBottom="1dp"
+        android:contentDescription="@string/gallery_image"
         android:scaleType="centerInside"
-        app:layout_constraintBottom_toTopOf="@+id/barrier"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="1.0"
-        android:contentDescription="@string/gallery_image"/>
-
+        app:layout_constraintTop_toBottomOf="@+id/barrierTop"
+        app:layout_constraintBottom_toTopOf="@+id/barrierBottom"/>
 
     <Button
         android:id="@+id/btn_galeria"
@@ -33,10 +27,8 @@
         android:text="@string/gallery"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/btn_foto"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.95" />
+        app:layout_constraintTop_toBottomOf="@+id/barrierBottom" />
 
     <Button
         android:id="@+id/btn_foto"
@@ -45,19 +37,27 @@
         android:text="@string/take_picture"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/btn_galeria"
-        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.95" />
+        app:layout_constraintTop_toBottomOf="@+id/barrierBottom" />
 
     <androidx.constraintlayout.widget.Barrier
-        android:id="@+id/barrier"
+        android:id="@+id/barrierTop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:barrierDirection="top"
+        app:constraint_referenced_ids="iv_foto"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.1" />
+
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/barrierBottom"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:barrierDirection="top"
         app:constraint_referenced_ids="btn_foto,btn_galeria"
-        tools:layout_editor_absoluteX="411dp"
-        tools:layout_editor_absoluteY="647dp" />
-
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.85" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
