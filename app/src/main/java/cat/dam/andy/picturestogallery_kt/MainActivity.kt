@@ -24,9 +24,9 @@ import java.util.Date
 import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
-    private var ivImatge: ImageView? = null
-    private var btnFoto: Button? = null
-    private var btnGaleria: Button? = null
+    private lateinit var ivImatge: ImageView
+    private lateinit var btnFoto: Button
+    private lateinit var btnGaleria: Button
     private var uriPhotoImage: Uri? = null
     private val context: Context = this
     private var permissionManager = PermissionManager(context)
@@ -57,14 +57,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initListeners() {
-        btnGaleria?.setOnClickListener {
+        btnGaleria.setOnClickListener {
             if (!permissionManager.hasAllNeededPermissions()) {
                 permissionManager.askForPermissions(permissionManager.getRejectedPermissions())
             } else {
                 openGallery()
             }
         }
-        btnFoto?.setOnClickListener() {
+        btnFoto.setOnClickListener() {
             if (!permissionManager.hasAllNeededPermissions()) {
                 permissionManager.askForPermissions(permissionManager.getRejectedPermissions())
             } else {
@@ -85,7 +85,7 @@ class MainActivity : AppCompatActivity() {
             if (data != null) {
                 val imageUri = data.data
                 println("galeria: $imageUri")
-                ivImatge!!.setImageURI(imageUri)
+                ivImatge.setImageURI(imageUri)
             }
         } else {
             //cancelled
@@ -99,7 +99,7 @@ class MainActivity : AppCompatActivity() {
         //here we will handle the result of our intent
         if (result.resultCode == RESULT_OK) {
             Toast.makeText(this, "Image saved", Toast.LENGTH_SHORT).show()
-            ivImatge!!.setImageURI(uriPhotoImage) //Amb paràmetre EXIF podem canviar orientació (per defecte horiz en versions android antigues)
+            ivImatge.setImageURI(uriPhotoImage) //Amb paràmetre EXIF podem canviar orientació (per defecte horiz en versions android antigues)
             refreshGallery() //refresca gallery per veure nou fitxer
             /* Intent data = result.getData(); //si volguessim només la miniatura
         Uri imageUri = data.getData();
