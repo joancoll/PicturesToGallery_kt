@@ -51,59 +51,47 @@ class PermissionManager(private val activityContext: Context) {
                                 matchedPermission.permissionGrantedMessage
                             )
                         }
+                } else if (ActivityCompat.shouldShowRequestPermissionRationale(
+                        activityContext,
+                        permissionRequired
+                    )) {
+                    // Permission denied, but not permanently
+                    permissionsRequired
+                        .firstOrNull { it.permission == permissionRequired }
+                        ?.let { matchedPermission ->
+                            showAlert(
+                                R.string.permissionDenied,
+                                matchedPermission.permissionNeededMessage,
+                                { _, _ ->
+                                    // Ask again for permission
+                                    askForPermission(matchedPermission)
+                                },
+                                { dialogInterface, _ ->
+                                    dialogInterface.dismiss()
+                                }
+                            )
+                        }
                 } else {
-
-                    if (ActivityCompat.shouldShowRequestPermissionRationale(
-                            activityContext,
-                            permissionRequired
-                        )
-                    ) {
-                        // Permission denied
-                        permissionsRequired
-                            .firstOrNull { it.permission == permissionRequired }
-                            ?.let { matchedPermission ->
-                                showAlert(
-                                    R.string.permissionDenied,
-                                    matchedPermission.permissionNeededMessage,
-                                    { _, _ ->
-                                        // Ask again for permission
-                                        askForPermission(matchedPermission)
-                                    },
-                                    { dialogInterface, _ ->
-                                        dialogInterface.dismiss(
-                                        )
-                                    }
-                                )
-                            }
-                    } else {
-                        // Permission denied permanently
-                        permissionsRequired
-                            .firstOrNull { it.permission == permissionRequired }
-                            ?.let { matchedPermission ->
-                                showAlert(
-                                    R.string.permissionPermDenied,
-                                    matchedPermission.permissionPermanentDeniedMessage,
-                                    { _, _ ->
-                                        // Go to app settings
-                                        val intent =
-                                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                                        val uri = Uri.fromParts(
-                                            "package",
-                                            activityContext.packageName,
-                                            null
-                                        )
-                                        intent.data = uri
-                                        activityContext.startActivity(intent)
-                                    },
-                                    { dialogInterface, _ ->
-                                        dialogInterface.dismiss()
-                                    }
-                                )
-                            }
-                    }
-
+                    // Permission denied permanently
+                    permissionsRequired
+                        .firstOrNull { it.permission == permissionRequired }
+                        ?.let { matchedPermission ->
+                            showAlert(
+                                R.string.permissionPermDenied,
+                                matchedPermission.permissionPermanentDeniedMessage,
+                                { _, _ ->
+                                    // Go to app settings
+                                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                    val uri = Uri.fromParts("package", activityContext.packageName, null)
+                                    intent.data = uri
+                                    activityContext.startActivity(intent)
+                                },
+                                { dialogInterface, _ ->
+                                    dialogInterface.dismiss()
+                                }
+                            )
+                        }
                 }
-
             }
     }
 
