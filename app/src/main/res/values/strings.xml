@@ -24,6 +24,13 @@
     <string name="cameraPermissionThanks">You gave access to camera. Thanks!</string>
     <string name="cameraPermissionSettings">You permanently denied camera permission, please enable this permission in your settings to enjoy this app.</string>
     <string name="cameraPermissionsReady">Camera permission ready</string>
+    <string name="mediaImageAccessPermissionInfo">Media Image Access</string>
+    <string name="mediaImageAccessPermissionNeeded">We need media image access to show and save your pictures</string>
+    <string name="mediaImageAccessPermissionDenied">You denied media image access permission, please enable this permission in your settings to enjoy this app.</string>
+    <string name="mediaImageAccessPermissionThanks">You gave access to media image. Thanks!</string>
+    <string name="mediaImageAccessPermissionSettings">You permanently denied media image permission, please enable this permission in your settings to enjoy this app.</string>
+    <string name="mediaImageAccessPermissionReady">Media image access permission ready</string>
+
     <string name="writeExternalStoragePermissionInfo">Write external access</string>
     <string name="writeExternalStoragePermissionNeeded">We need write external storage permission to save your pictures</string>
     <string name="writeExternalStoragePermissionDenied">You denied write external storage permission, please enable this permission in your settings to enjoy this app.</string>
@@ -48,4 +55,5 @@
     <string name="locationPermissionThanks">You gave access to your location. Thanks!</string>
     <string name="locationPermissionSettings">You permanently denied access to your location, please enable this permission in your settings to enjoy this app.</string>
     <string name="locationPermissionReady">Location ready</string>
+    <string name="photo_capture_error">Cancelled - Photo wasn\'t captured</string>
 </resources>

@@ -24,16 +24,93 @@ class PermissionManager(private val activityContext: Context) {
     )
 
     private val permissionsRequired = mutableListOf<PermissionData>()
-    private var activityResultLauncher: ActivityResultLauncher<Array<String>>? = null
+    private var permissionRequired: String=""
+    private var singlePermissionResultLauncher: ActivityResultLauncher<String>? = null
+    private var multiplePermissionResultLauncher: ActivityResultLauncher<Array<String>>? = null
 
     init {
-        // Inicialitza el launcher per demanar permisos
-        initPermissionLauncher()
+        // Inicialitza el launcher per demanar un sol permís
+        initSinglePermissionLauncher()
+        // Inicialitza el launcher per demanar múltiples permisos
+        initMultiplePermissionLauncher()
     }
 
-    private fun initPermissionLauncher() {
+    private fun initSinglePermissionLauncher() {
+        // Inicialitza el launcher per demanar un sol permís
+        singlePermissionResultLauncher =
+            (activityContext as AppCompatActivity).registerForActivityResult(
+                ActivityResultContracts.RequestPermission()
+            ) { isGranted ->
+                if (isGranted) {
+                    // Permission granted
+                    permissionsRequired
+                        .firstOrNull { it.permission == permissionRequired }
+                        ?.let { matchedPermission ->
+                            showAlert(
+                                R.string.permissionGranted,
+                                matchedPermission.permissionGrantedMessage
+                            )
+                        }
+                } else {
+
+                    if (ActivityCompat.shouldShowRequestPermissionRationale(
+                            activityContext,
+                            permissionRequired
+                        )
+                    ) {
+                        // Permission denied
+                        permissionsRequired
+                            .firstOrNull { it.permission == permissionRequired }
+                            ?.let { matchedPermission ->
+                                showAlert(
+                                    R.string.permissionDenied,
+                                    matchedPermission.permissionNeededMessage,
+                                    { _, _ ->
+                                        // Ask again for permission
+                                        askForPermission(matchedPermission)
+                                    },
+                                    { dialogInterface, _ ->
+                                        dialogInterface.dismiss(
+                                        )
+                                    }
+                                )
+                            }
+                    } else {
+                        // Permission denied permanently
+                        permissionsRequired
+                            .firstOrNull { it.permission == permissionRequired }
+                            ?.let { matchedPermission ->
+                                showAlert(
+                                    R.string.permissionPermDenied,
+                                    matchedPermission.permissionPermanentDeniedMessage,
+                                    { _, _ ->
+                                        // Go to app settings
+                                        val intent =
+                                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                        val uri = Uri.fromParts(
+                                            "package",
+                                            activityContext.packageName,
+                                            null
+                                        )
+                                        intent.data = uri
+                                        activityContext.startActivity(intent)
+                                    },
+                                    { dialogInterface, _ ->
+                                        dialogInterface.dismiss()
+                                    }
+                                )
+                            }
+                    }
+
+                }
+
+            }
+    }
+
+
+    private fun initMultiplePermissionLauncher() {
         // Inicialitza el launcher per demanar permisos
-        activityResultLauncher =
+        multiplePermissionResultLauncher =
             (activityContext as AppCompatActivity).registerForActivityResult(
                 ActivityResultContracts.RequestMultiplePermissions(),
                 ActivityResultCallback<Map<String, Boolean>> { permissions ->
@@ -41,7 +118,8 @@ class PermissionManager(private val activityContext: Context) {
                     if (permissions.containsValue(false)) {
                         // Check every permission
                         for (permissionKey in permissions.keys) {
-                            val position = permissionsRequired.indexOfFirst { it.permission == permissionKey }
+                            val position =
+                                permissionsRequired.indexOfFirst { it.permission == permissionKey }
 
                             when {
                                 permissions[permissionKey] == true -> {
@@ -51,6 +129,7 @@ class PermissionManager(private val activityContext: Context) {
                                         permissionsRequired[position].permissionGrantedMessage
                                     )
                                 }
+
                                 ActivityCompat.shouldShowRequestPermissionRationale(
                                     activityContext,
                                     permissionKey
@@ -61,13 +140,14 @@ class PermissionManager(private val activityContext: Context) {
                                         permissionsRequired[position].permissionNeededMessage,
                                         { _, _ ->
                                             // Ask again for permission
-                                            askOnePermission(permissionsRequired[position])
+                                            askForPermission(permissionsRequired[position])
                                         },
                                         { dialogInterface, _ ->
                                             dialogInterface.dismiss()
                                         }
                                     )
                                 }
+
                                 else -> {
                                     // Permission denied permanently
                                     showAlert(
@@ -75,8 +155,13 @@ class PermissionManager(private val activityContext: Context) {
                                         permissionsRequired[position].permissionPermanentDeniedMessage,
                                         { _, _ ->
                                             // Go to app settings
-                                            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                                            val uri = Uri.fromParts("package", activityContext.packageName, null)
+                                            val intent =
+                                                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                            val uri = Uri.fromParts(
+                                                "package",
+                                                activityContext.packageName,
+                                                null
+                                            )
                                             intent.data = uri
                                             activityContext.startActivity(intent)
                                         },
@@ -92,8 +177,24 @@ class PermissionManager(private val activityContext: Context) {
             )
     }
 
-    fun addPermission(permission: String?, permissionInfo: String?, permissionNeededMessage: String, permissionDeniedMessage: String, permissionGrantedMessage: String, permissionPermanentDeniedMessage: String){
-        permissionsRequired.add(PermissionData(permission, permissionInfo, permissionNeededMessage, permissionDeniedMessage, permissionGrantedMessage, permissionPermanentDeniedMessage))
+    fun addPermission(
+        permission: String?,
+        permissionInfo: String?,
+        permissionNeededMessage: String,
+        permissionDeniedMessage: String,
+        permissionGrantedMessage: String,
+        permissionPermanentDeniedMessage: String
+    ) {
+        permissionsRequired.add(
+            PermissionData(
+                permission,
+                permissionInfo,
+                permissionNeededMessage,
+                permissionDeniedMessage,
+                permissionGrantedMessage,
+                permissionPermanentDeniedMessage
+            )
+        )
     }
 
     fun getAllNeededPermissions(): MutableList<PermissionData> {
@@ -104,6 +205,14 @@ class PermissionManager(private val activityContext: Context) {
     fun hasAllNeededPermissions(): Boolean {
         // Comprova que tingui els permisos necessaris
         return permissionsRequired.all { hasPermission(it.permission ?: "") }
+    }
+
+    fun hasThisNeededPermission(permission: String): Boolean {
+        // Comprova que tingui el permís necessari
+        val matchingPermission = permissionsRequired.firstOrNull { it.permission == permission }
+        return matchingPermission?.let { matchingPermission.permission?.let { it ->
+            hasPermission(it)
+        } } ?: false
     }
 
     fun getRejectedPermissions(): ArrayList<PermissionData> {
@@ -119,14 +228,21 @@ class PermissionManager(private val activityContext: Context) {
         ) == PackageManager.PERMISSION_GRANTED
     }
 
-    fun askForPermissions(permissions: ArrayList<PermissionData>) {
-        // Demana tots els permisos necessaris
-        activityResultLauncher?.launch(permissions.map { it.permission ?: "" }.toTypedArray())
+    fun askForThisPermission(permission: String) {
+        // Demana el permis necessari amb el launcher
+        permissionRequired = permission
+        singlePermissionResultLauncher?.launch(permission)
     }
 
-    fun askOnePermission(permission: PermissionData) {
+    fun askForAllNeededPermissions() {
+        // Demana tots els permisos necessaris
+        multiplePermissionResultLauncher?.launch(permissionsRequired.map { it.permission ?: "" }
+            .toTypedArray())
+    }
+
+    private fun askForPermission(permission: PermissionData) {
         // Demana el permís necessari
-        activityResultLauncher?.launch(arrayOf(permission.permission ?: ""))
+        multiplePermissionResultLauncher?.launch(arrayOf(permission.permission ?: ""))
     }
 
     private fun showAlert(
