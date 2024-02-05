@@ -71,7 +71,10 @@ class PermissionManager(private val activityContext: Context) {
                                 }
                             )
                         }
-                } else {
+                    // detecta si l'usuari ha cancel·lat la petició de permís o si l'ha denegat permanentment
+                } else if (!ActivityCompat.shouldShowRequestPermissionRationale(
+                        activityContext,
+                        permissionRequired )) {
                     // Permission denied permanently
                     permissionsRequired
                         .firstOrNull { it.permission == permissionRequired }
