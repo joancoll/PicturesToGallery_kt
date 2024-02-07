@@ -219,6 +219,12 @@ class PermissionManager(private val activityContext: Context) {
         ) == PackageManager.PERMISSION_GRANTED
     }
 
+    fun askForPermissions(permissions: ArrayList<PermissionData>) {
+        // Demana els permisos necessaris amb el launcher
+        multiplePermissionResultLauncher?.launch(permissions.map { it.permission ?: "" }
+            .toTypedArray())
+    }
+
     fun askForThisPermission(permission: String) {
         // Demana el permis necessari amb el launcher
         permissionRequired = permission
